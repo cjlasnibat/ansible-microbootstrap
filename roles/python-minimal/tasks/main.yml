@@ -1,0 +1,10 @@
+---
+
+# Parece que hay un bug en linux containers en donde los contenedores quedan
+# configurados con un http_proxy inexistente. 
+- name: unset weird http_proxy
+  raw: unset http_proxy
+
+- name: instalar python-minimal
+  raw: apt-get -y update && apt-get -y install python-minimal
+

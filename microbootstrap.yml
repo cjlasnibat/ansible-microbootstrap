@@ -1,0 +1,15 @@
+---
+- hosts: Debian-like
+  remote_user: '{{ user }}'
+  become: no
+  gather_facts: no
+  roles:
+    - python-minimal
+
+- hosts: '{{ hosts }}'
+  remote_user: '{{ user }}'
+  become: no
+  gather_facts: yes
+  roles:
+    - microbootstrap
+

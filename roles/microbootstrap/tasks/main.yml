@@ -1,0 +1,51 @@
+---
+# instalar cosas realmente mínimas en hosts, para que puedan ser ansible-abes.
+
+# Parece que hay un bug en linux containers en donde los contenedores quedan
+# configurados con un http_proxy inexistente
+# Puedes quitar esto o aprovecharlo para setear un proxy http si quieres.
+- name: unset weird http_proxy
+  raw: unset http_proxy
+
+
+# Red Hat, Debian y derivados vienen sin sudo en sus instalaciones mínimas o imágenes cloud
+- name: be sure that sudo it's installed
+  package: name=sudo update_cache=true state=present
+
+- name: install screen if nor present
+  package: name=screen update_cache=true state=present
+
+# Debian-like almost minimal packages
+- name: install tmux
+  apt: name=tmux update_cache=true cache_valid_time=600
+  when: ansible_os_family == 'Debian'
+
+# RedHat-like almost minimal packages
+- name: install libselinux-python
+  yum: name=libselinux-python update_cache=true state=present
+  when: ansible_os_family == 'RedHat'
+
+# Usuario sudoer para ansible y su pubkey
+- name: create ansible user 
+  user: name="{{ ansibleuser }}"
+        shell=/bin/bash
+        comment='Ansible control user'
+        createhome=yes
+        state=present
+        uid=10240
+
+- name: put in place ssh pubkey of ansible user
+  authorized_key: user="{{ ansibleuser }}"
+                  key="{{ item }}"
+  with_items:
+    - "{{ sshpublickey }}"
+
+# Usuario ansible será sudoer sin password
+- name: configure ansible use as sudoer
+  lineinfile:   dest=/etc/sudoers.d/ansible
+                line="ansible ALL=(ALL) NOPASSWD:ALL"
+                mode=0440
+                state=present
+                create=yes
+                validate='visudo -cf %s'
+
